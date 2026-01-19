@@ -1,133 +1,258 @@
+
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>#000000</title>
-    <link type="image/x-icon" rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYGD4z0ABYBw1gGE0DBhGw4BhWIQBAE5OEAELnjVHAAAAAElFTkSuQmCC">
-    <style>
-        :root {
-            --color: #000000;
-            --color-transparent: #00000022;
-        }
-
-        ::selection {
-            background: var(--color-transparent);
-        }
-
-        html,
-        body {
-            background: var(--color);
-            height: 100%;
-            margin: 0;
-        }
-
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        #color {
-            background: white;
-            color: var(--color);
-            font-size: 2.5rem;
-            font-weight: 300;
-            padding: 2.25rem 3rem;
-            font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif;
-            cursor: text;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>kbsigmaboy67</title>
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: white;
+  }
+  iframe, img.fullscreen {
+    border: none;
+    width: 100%;
+    height: 100vh;
+    object-fit: contain;
+    background: black;
+  }
+  .tool {
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+  }
+  textarea, input {
+    width: 100%;
+    background: #020617;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 8px;
+  }
+  button {
+    background: #2563eb;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    margin: 4px 0;
+  }
+  label { display:block; margin-top:10px; cursor:pointer; }
+</style>
 </head>
-
 <body>
-    <p id="color">#000000</p>
-    <script>
-        function randomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1) + min);
-        }
+<div id="app"></div>
 
-        function hslToHex(h, s, l) {
-            h /= 360;
-            s /= 100;
-            l /= 100;
-            var r = void 0,
-                g = void 0,
-                b = void 0;
-            if (s === 0) {
-                r = g = b = l; // achromatic
-            } else {
-                var hue2rgb = function hue2rgb(p, q, t) {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1 / 6) return p + (q - p) * 6 * t;
-                    if (t < 1 / 2) return q;
-                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                    return p;
-                };
-                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                var p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1 / 3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1 / 3);
-            }
-            var toHex = function toHex(x) {
-                var hex = Math.round(x * 255).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-            };
-            return '#' + toHex(r) + toHex(g) + toHex(b);
-        }
+<script>
+(() => {
+  const raw = location.hash.slice(1) || location.search.slice(1);
+  const app = document.getElementById("app");
 
-        window.onload = function () {
-            let stopProp = function (ev) {
-                ev.stopPropagation();
-            }
+  // =========================
+  // MODE SETTING (persisted)
+  // =========================
+  const MODE_KEY = "openMode";
+  let useBlob = localStorage.getItem(MODE_KEY);
+  if (useBlob === null) {
+    useBlob = "blob";
+    localStorage.setItem(MODE_KEY, "blob");
+  }
 
-            var colorElement = document.getElementById("color");
-            colorElement.addEventListener("click", stopProp, false);
-            colorElement.addEventListener("mousedown", stopProp, false);
+  function isBlobMode() {
+    return localStorage.getItem(MODE_KEY) === "blob";
+  }
 
-            var setFavicon = function (hex) {
-                var canvas = document.createElement('canvas');
-                canvas.width = 16;
-                canvas.height = 16;
-                var ctx = canvas.getContext('2d');
-                ctx.fillStyle = hex;
-                ctx.fillRect(0, 0, 16, 16);
-                document.getElementsByTagName('link')[0].href = canvas.toDataURL("image/x-icon");
-            }
+  function renderHTML(html) {
+    if (isBlobMode()) {
+      const blob = new Blob([html], { type: "text/html" });
+      location.replace(URL.createObjectURL(blob));
+    } else {
+      document.open();
+      document.write(html);
+      document.close();
+    }
+  }
 
-            var setRandomColor = function setRandomColor() {
-                var h = void 0,
-                    s = void 0,
-                    l = void 0;
+  function renderImage(dataUrl) {
+    if (isBlobMode()) {
+      const html = `
+<!DOCTYPE html>
+<body style="margin:0;background:black">
+<img src="${dataUrl}" style="width:100%;height:100vh;object-fit:contain">
+</body>`;
+      renderHTML(html);
+    } else {
+      document.body.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = dataUrl;
+      img.className = "fullscreen";
+      document.body.appendChild(img);
+    }
+  }
 
-                h = randomInt(0, 359);
-                s = randomInt(55, 75);
-                l = randomInt(40, 60);
-
-                document.documentElement.style.setProperty('--color', 'hsl(' + h + ', ' + s + '%, ' + l + '%)');
-                var hex = hslToHex(h, s, l);
-                document.title = hex;
-                colorElement.innerHTML = hex;
-                document.documentElement.style.setProperty('--color-transparent', hex + '22');
-
-                setFavicon(hex);
-            };
-            setRandomColor();
-
-            var body = document.getElementsByTagName("body")[0];
-            body.addEventListener("mousedown", function (ev) {
-                ev.preventDefault();
-            });
-            body.addEventListener("click", function () {
-                setRandomColor();
-            }, false);
-        };
-    </script>
+  function renderURL(url) {
+    const html = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;background:black">
+<iframe src="${url.replace(/"/g, "&quot;")}" style="border:none;width:100%;height:100vh"></iframe>
 </body>
+</html>`;
+    renderHTML(html);
+  }
 
+  // =============================
+  // LOADER MODE
+  // =============================
+  if (raw) {
+
+    // Image mode
+    if (raw.startsWith("image/")) {
+      const data = raw.slice(6);
+      renderImage(data);
+      return;
+    }
+
+    function tryBase64(str) {
+      try {
+        if (!/^[A-Za-z0-9+/=]+$/.test(str)) return null;
+        const d = atob(str);
+        if (d.trim().startsWith("<")) return d;
+      } catch {}
+      return null;
+    }
+
+    if (raw.toLowerCase().startsWith("%3c")) {
+      renderHTML(decodeURIComponent(raw));
+      return;
+    }
+
+    let decoded;
+    try { decoded = decodeURIComponent(raw); } catch { decoded = raw; }
+
+    if (decoded.trim().startsWith("<")) {
+      renderHTML(decoded);
+      return;
+    }
+
+    const b64 = tryBase64(raw);
+    if (b64) {
+      renderHTML(b64);
+      return;
+    }
+
+    if (/^(https?:\/\/|blob:|data:)/i.test(decoded)) {
+      renderURL(decoded);
+      return;
+    }
+
+    return;
+  }
+
+  // =============================
+  // TOOL MODE
+  // =============================
+  const baseURL = location.origin + location.pathname;
+
+  app.innerHTML = `
+  <div class="tool">
+    <h1>Encoder Toolkit</h1>
+
+    <label><div style="background:none;width:288px;height:30px;padding:10px;border-radius:8px;margin-top:10px; color:inherit;">
+      Use Blob mode (recommended)
+      <input type="checkbox" id="modeToggle"></div>
+    </label>
+
+    <h2>1. Base64 Encoder</h2>
+    <textarea id="b64in" rows="3"></textarea>
+    <button onclick="b64encode()">Encode</button>
+    <textarea id="b64out" rows="2"></textarea>
+
+    <h2>2. URI Encoder</h2>
+    <textarea id="uriin" rows="3"></textarea>
+    <button onclick="uriencode()">Encode</button>
+    <textarea id="uriout" rows="2"></textarea>
+
+    <h2>3. HTML → Shareable Base64 URL</h2>
+    <textarea id="htmlin" rows="5"></textarea>
+    <button onclick="generateURL()">Generate</button>
+    <input id="urlout" readonly />
+
+    <h2>4. Image → Base64 Data URL</h2>
+    <input type="file" id="imgfile" accept="image/*">
+    <input id="imgurl" placeholder="or paste image URL here">
+    <button onclick="convertImage()">Convert</button>
+
+    <label>
+    <div style="background:none;width:288px;height:30px;padding:10px;border-radius:8px;margin-top:10px; color:inherit;">Add domain prefix<input type="checkbox" id="withDomain" checked></div>
+    </label>
+
+    <button onclick="copyImage()">Copy to Clipboard</button>
+    
+    <h2>5. Other Tools</h2>
+    <a href="compressor.html" target="_blank">Image Compressor/Downsizer</a>
+  </div>
+  `;
+
+  // Initialize toggle
+  const toggle = document.getElementById("modeToggle");
+  toggle.checked = isBlobMode();
+  toggle.onchange = () => {
+    localStorage.setItem(MODE_KEY, toggle.checked ? "blob" : "direct");
+  };
+
+  let lastImageData = "";
+
+  window.b64encode = () => {
+    b64out.value = btoa(unescape(encodeURIComponent(b64in.value)));
+  };
+
+  window.uriencode = () => {
+    uriout.value = encodeURIComponent(uriin.value);
+  };
+
+  window.generateURL = () => {
+    const b64 = btoa(unescape(encodeURIComponent(htmlin.value)));
+    urlout.value = baseURL + "#" + b64;
+  };
+
+  window.convertImage = async () => {
+    try {
+      let blob;
+      if (imgfile.files[0]) blob = imgfile.files[0];
+      else if (imgurl.value) {
+        const res = await fetch(imgurl.value);
+        if (!res.ok) throw new Error();
+        blob = await res.blob();
+      } else return alert("Upload image or paste URL.");
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        lastImageData = reader.result;
+        alert("Image converted. Ready to copy.");
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      alert("Image failed (CORS blocked). Use upload instead.");
+    }
+  };
+
+  window.copyImage = async () => {
+    if (!lastImageData) return alert("No image converted yet.");
+
+    const text = withDomain.checked
+      ? baseURL + "#image/" + lastImageData
+      : lastImageData;
+
+    await navigator.clipboard.writeText(text);
+    alert("Copied!");
+  };
+
+})();
+</script>
+</body>
 </html>
